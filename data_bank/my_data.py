@@ -3,18 +3,14 @@ import json
 import boto3
 
 client = boto3.client('dynamodb')
-tablename = os.environ['tablename']
 
 def data(event, context):
 
-    body = json.loads(event['body'])
-
-    response = client.scan(
-        TableName = tablename,
-        Select= 'ALL_ATTRIBUTES'
+    data = client.scan(
+        TableName='data_bank',
+        Select='ALL_ATTRIBUTES'
     )
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps(response)
-    }
+    response = {"statusCode": 200, "body": json.dumps(data, indent=4, sort_keys=True, default=str)}
+
+    return response

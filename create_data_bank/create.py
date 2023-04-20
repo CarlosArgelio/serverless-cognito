@@ -1,31 +1,35 @@
 import os
 import json
+import uuid
 import boto3
 
-client = boto3.client('dynamodb')
+import logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
-IS_OFFLINE = os.getenv('IS_OFFLINE', False)
-if IS_OFFLINE:
-    boto3.Session(
-        aws_access_key_id='ACESS_KEY',
-        aws_secret_access_key='SECRET_KEY'
-    )
-    client = boto3.resource('dynamodb', endpoint_url='http://localhost:8000')
-
-tablename = os.environ['tablename']
+client = boto3.resource('dynamodb')
 
 def create(event, context):
     
+    id = str(uuid.uuid1())
     body = json.loads(event['body'])
+    body['pk'] = id
 
-    item = {body}
+    table = client.Table("data_bank")
 
-    response = client.put_item(
-        TableName = tablename,
+    item = {
+        "pk": str(body['pk']),
+        "username": str(body['username']),
+        "tdc": str(body['tdc']),
+        "money": str(body['money'])
+    }
+
+    data = table.put_item(
         Item=item
     )
 
-    return {
-        "statusCode": 201,
-        "Body": response
-    }
+    send_response = item|data
+
+    response = {"statusCode": 200, "body": json.dumps(send_response, indent=4, sort_keys=True, default=str)}
+
+    return response

@@ -6,54 +6,47 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: python3.9
-  apiGateway:
-    apiKeys:
-      - sls-auth-cognito-apikey
+  region: us-east-2
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:scan
+            - dynamodb:PutItem
+          Resource: arn:aws:dynamodb:us-east-2:*:table/data_bank
+        - Effect: Allow
+          Action:
+            - cognito-idp:AdminConfirmSignUp
+          Resource: arn:aws:cognito-idp:us-east-2:261834676998:userpool/us-east-2_RLHJC7R1L
   environment:
     tablename: data_bank
 
-custom:
-  dynamodb:
-  # If you only want to use DynamoDB Local in some stages, declare them here
-    stages:
-      - dev
-    start:
-      port: 8000
-      inMemory: true
-      migrate: true
-    # Uncomment only if you already have a DynamoDB running locally
-    # noStart: true
-
 plugins:
+  - serverless-offline
   - serverless-pydeps
-  - serverless-dynamodb-local
 
 
 package: 
-  individually: true
+  individually: True
   patterns:
     - "!*/**"
     - "!**"
 
 functions:
-  hello:
-    handler: handler.hello
-    events:
-      - httpApi:
-          path: /
-          method: get
-
   get_data:
-    handler: data_banck/my_data.data
+    handler: data_bank/my_data.data
     package: 
       patterns:
-        - "data_banck/my_data.py"
+        - "data_bank/my_data.py"
     events:
       - http:
-          path: bank
-          method: post
-          cors: true
-          private: true #x-api-key
+          path: v1/bank
+          method: get
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiGatewayAuthorizer
 
   create_data:
     handler: create_data_bank/create.create
@@ -62,11 +55,35 @@ functions:
         - "create_data_bank/create.py"
     events:
       - http:
-          path: bank
+          path: v1/bank
           method: post
-          cors: true
-          private: true #x-api-key
-      
+          request:
+            schemas:
+              application/json: ${file(api-schema.json)}
+
+  sign_up:
+    handler: auth/signup.signup
+    package:
+      patterns:
+        - "auth/signup.py"
+    events:
+      - http:
+          path: v1/signup
+          method: post
+          request:
+            schemas:
+              application/json: ${file(signup.json)}
+    
+  sign_in:
+    handler: auth/signin.signin
+    package:
+      patterns:
+        - "auth/signin.py"
+    events:
+      - http:
+          path: v1/signin
+          method: post
+
 resources:
   Resources:
     tableDynamoDB:
@@ -83,4 +100,13 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
 
-
+    ApiGatewayAuthorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        AuthorizerResultTtlInSeconds: 300
+        IdentitySource: method.request.header.Authorization
+        Name: Cognito
+        RestApiId: fp6kemr57e
+        Type: COGNITO_USER_POOLS
+        ProviderARNs:
+          - arn:aws:cognito-idp:us-east-2:261834676998:userpool/us-east-2_RLHJC7R1L

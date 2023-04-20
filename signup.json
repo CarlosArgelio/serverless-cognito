@@ -1,0 +1,16 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "GroceryStoreInputModel",
+    "type": "object",
+    "required":["username", "password"],
+    "properties": {
+      "username": {
+        "type": "string",
+        "description": "username of user."
+      },
+      "password": {
+        "type":"string", 
+        "description": "Password user."
+      }
+    }
+}
