@@ -1,0 +1,23 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "GroceryStoreInputModel",
+    "type": "object",
+    "required":["username", "tdc", "money"],
+    "properties": {
+      "username": {
+        "type": "string",
+        "description": "This username."
+      },
+      "tdc": {
+        "type":"integer",
+        "pattern": "^3[47][0-9]{13}$", 
+        "description": "This is tdc"
+      },
+      "money": {
+        "type": "number",
+        "description": "This is money acount"
+      }
+    }
+}
+
+//American Express == 378282246310005 o 371449635398431

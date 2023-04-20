@@ -1,0 +1,86 @@
+org: carlosapr01
+app: serverless-auth-with-cognito
+service: sls-auth-cognito
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.9
+  apiGateway:
+    apiKeys:
+      - sls-auth-cognito-apikey
+  environment:
+    tablename: data_bank
+
+custom:
+  dynamodb:
+  # If you only want to use DynamoDB Local in some stages, declare them here
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+    # Uncomment only if you already have a DynamoDB running locally
+    # noStart: true
+
+plugins:
+  - serverless-pydeps
+  - serverless-dynamodb-local
+
+
+package: 
+  individually: true
+  patterns:
+    - "!*/**"
+    - "!**"
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - httpApi:
+          path: /
+          method: get
+
+  get_data:
+    handler: data_banck/my_data.data
+    package: 
+      patterns:
+        - "data_banck/my_data.py"
+    events:
+      - http:
+          path: bank
+          method: post
+          cors: true
+          private: true #x-api-key
+
+  create_data:
+    handler: create_data_bank/create.create
+    package: 
+      patterns:
+        - "create_data_bank/create.py"
+    events:
+      - http:
+          path: bank
+          method: post
+          cors: true
+          private: true #x-api-key
+      
+resources:
+  Resources:
+    tableDynamoDB:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.tablename}
+        AttributeDefinitions:
+          - AttributeName: pk
+            AttributeType: S
+        KeySchema:
+          - AttributeName: pk
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+
