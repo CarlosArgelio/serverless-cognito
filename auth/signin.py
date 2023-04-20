@@ -10,8 +10,9 @@ def signin(event, context):
     password = str(body['password'])
 
     authentication = client.initiate_auth(
+        # UserPoolId='us-east-2_RLHJC7R1L',
         ClientId='jhebkck5l195ug1gbp66ok4j9',
-        AuthFlow='ADMIN_NO_SRP_AUTH',
+        AuthFlow='USER_PASSWORD_AUTH',
         AuthParameters={
             'USERNAME': username,
             'PASSWORD': password
